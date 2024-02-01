@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./bar-chart.css">
+    <title>Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            fetch("https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json")
+                .then(response => response.json())
+                .then(data => JSON.stringify(data))
+                .then(data => chart( JSON.parse(data)) )
+                .catch(error => console.log("Failure => ", error))
+        });
+
+        function chart(x) {
+            const dataset =  x.data
+            const w = 900;
+            const h = 500;
+            padding = 45;
+            const svg = d3.select("#chart")
+                        .append("svg")
+                        .attr("width", w)
+                        .attr("height", h)
+                                               
+            let tooltip = d3.select("#chart")
+                            .append("div")
+                            .attr("id", "tooltip")
+                            .style("position", "absolute")
+                            .style("z-index", "10")
+                            .style("opacity", 0.9)
+                            .style("visibility", "hidden")
+                            .style("background-color", "grey")
+                            .style("color","white")
+                            .style("border", "solid")
+                            .style("border-width", "1px")
+                            .style("border-radius", "5px")
+                            .style("padding", "10px")
+
+            // debugger
+            // console.log(dataset[0])
+
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(dataset, function(d) { return new Date( d[0]) }))
+                .range([padding, w - padding]);
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(dataset, (d) => d[1])])
+                .range([h - padding, padding]);
+
+            // debugger
+
+            svg.selectAll("rect")
+               .data(dataset)
+               .enter()
+               .append("rect")
+               .attr("class", "bar")
+               .attr("x", (d) => xScale(new Date(d[0])))
+               .attr("y", (d) => yScale(d[1]))
+               .attr("width", 2.6)
+               .attr("height", (d) => h-padding-yScale(d[1]) )
+               .attr( "data-date", (d) => d[0])
+               .attr( "data-gdp", (d) => d[1])
+               .on("mouseenter", function() {return tooltip.style("visibility", "visible");})
+               .on("mousemove", ( e, d) => {
+                                    // debugger;
+                                    return tooltip
+                                        .attr("data-date", d[0])
+                                        .attr("data-gdp", d[1])
+                                        .style("top", (e.pageY-150)+"px")
+                                        .style("left",(e.pageX-100)+"px")
+                                        .html("Date: "+d[0]+"<br> GDP: "+d[1]);})
+               .on("mouseout", function() {return tooltip.style("visibility", "hidden");});
+
+            const x_axis = d3.axisBottom(xScale);
+            const y_axis = d3.axisLeft(yScale);
+
+            svg.append("g")
+               .attr("id","x-axis")
+               .attr("transform", "translate(0," + (h - padding) + ")")
+               .call(x_axis);
+   
+            svg.append("g")
+               .attr("id","y-axis")
+               .attr("transform", "translate("+padding+",0)")
+               .call(y_axis);
+
+        }
+    </script>
+</head>
+<body>
+    <h3 id="title">United States GDP</h2>
+    <div id="chart">
+    </div>
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+</body>
+</html>
